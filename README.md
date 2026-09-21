@@ -97,7 +97,7 @@ y se selecciona una propina del:
 Entonces:
 
 Propina = $50
-Total = $550 <br>
+Total = $550 
 
 🛠️ Tecnologías utilizadas
 Flutter
@@ -106,10 +106,14 @@ Android SDK
 Gradle
 
 👥 Participantes
-Nombre	Rol <br>
-Jimmy Antonio Chan Canche	Desarrollo de la aplicación <br>
-Manuel Orlando Keb Ortiz	Desarrollo de la aplicación <br>
-Manuel Alejandro Pech Huicab	Desarrollo de la aplicación <br>
+
+Nombre	Rol 
+Jimmy Antonio Chan Canche	Desarrollo de la aplicación 
+
+Manuel Orlando Keb Ortiz	Desarrollo de la aplicación 
+
+Manuel Alejandro Pech Huicab	Desarrollo de la aplicación 
+
 Brayan Miguel Rodriguez Dzab	Desarrollo de la aplicación
 
 📁 Estructura básica del proyecto
