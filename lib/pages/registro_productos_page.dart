@@ -143,37 +143,38 @@ class _RegistroProductosPageState
     );
   }
 
-  Widget _buildLayoutPequeno() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: FormularioProducto(
-                onAgregar: agregarProducto,
-              ),
+ Widget _buildLayoutPequeno() {
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: FormularioProducto(
+              onAgregar: agregarProducto,
             ),
           ),
+        ),
 
-          const SizedBox(height: 16),
+        const SizedBox(height: 16),
 
-          ResumenInventario(
-            total: calcularTotalInventario(),
-            cantidadProductos: productos.length,
+        ResumenInventario(
+          total: calcularTotalInventario(),
+          cantidadProductos: productos.length,
+        ),
+
+        const SizedBox(height: 16),
+
+        SizedBox(
+          height: 300,
+          child: ListaProductos(
+            productos: productos,
+            onEliminar: eliminarProducto,
           ),
-
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: ListaProductos(
-              productos: productos,
-              onEliminar: eliminarProducto,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 }
