@@ -1,28 +1,26 @@
 import 'package:flutter/material.dart';
-import 'pages/propina_page.dart';
-import 'pages/combustible_page.dart';
+import 'pages/registro_productos_page.dart';
 
 void main() {
-  runApp(const Practica02App());
+  runApp(const App());
 }
 
-class Practica02App extends StatelessWidget {
-  const Practica02App({super.key});
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Práctica 02 - Dart y Estado',
+      title: 'Práctica 03',
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(),
+        ),
       ),
-      initialRoute: '/propina',
-      routes: {
-        '/propina': (context) => const PropinaPage(),
-        '/combustible': (context) => const CombustiblePage(),
-      },
+      home: const RegistroProductosPage(),
     );
   }
 }
