@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/materia.dart';
+import 'package:gestion_eventos_staff_movil/models/Materia.dart';
 import '../widgets/materia_card.dart';
 import 'detalle_materia_page.dart';
 
