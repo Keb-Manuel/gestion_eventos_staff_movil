@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'practica_05_api/usuarios_page.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+
+import 'practica_06/notas_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  databaseFactory = databaseFactoryFfiWeb;
+
   runApp(const MainApp());
 }
 
@@ -12,11 +19,14 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Práctica 5 - API REST',
+      title: 'Práctica 6',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+        ),
+        useMaterial3: true,
       ),
-      home: const UsuariosPage(),
+      home: const NotasPage(),
     );
   }
 }
