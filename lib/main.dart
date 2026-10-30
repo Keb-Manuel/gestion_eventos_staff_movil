@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'practica_05_api/usuarios_page.dart';
+import 'practica_05_api/publicaciones/publicaciones_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -12,11 +12,12 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Práctica 5 - API REST',
+      title: 'Práctica 5 Individual',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
-      home: const UsuariosPage(),
+      home: const PublicacionesPage(),
     );
   }
 }
