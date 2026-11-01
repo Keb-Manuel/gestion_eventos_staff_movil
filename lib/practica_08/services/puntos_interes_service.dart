@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/punto_interes.dart';
 
 class PuntosInteresService {
-  static const String _clavePuntos = 'puntos_interes';
+  static const String _clavePuntos = 'puntos_interes_individual_8991';
 
   Future<List<PuntoInteres>> obtenerPuntos() async {
     final preferencias = await SharedPreferences.getInstance();
