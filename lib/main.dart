@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:provider/provider.dart';
 
-import 'practica_06/notas_page.dart';
+import 'practica_08/providers/ubicacion_provider.dart';
+import 'practica_08/screens/ubicacion_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  databaseFactory = databaseFactoryFfiWeb;
-
-  runApp(const MainApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => UbicacionProvider(),
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -19,14 +22,14 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Práctica 6',
+      title: 'Práctica 8 - Geolocalización',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
         ),
         useMaterial3: true,
       ),
-      home: const NotasPage(),
+      home: const UbicacionPage(),
     );
   }
 }
