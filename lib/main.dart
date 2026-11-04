@@ -6,7 +6,7 @@ import 'screens/tarea_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  databaseFactory = databaseFactoryFfiWeb;   // ← solo web
+  databaseFactory = databaseFactoryFfiWeb; // ← solo web
   runApp(const MyApp());
 }
 

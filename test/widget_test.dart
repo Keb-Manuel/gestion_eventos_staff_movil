@@ -38,7 +38,8 @@ void main() {
 
   test('actualizar y eliminar', () async {
     final id = await DB.insertarTarea(titulo: 'Viejo', descripcion: 'X');
-    await DB.actualizarTarea(id, titulo: 'Nuevo', descripcion: 'Y', completada: true);
+    await DB.actualizarTarea(id,
+        titulo: 'Nuevo', descripcion: 'Y', completada: true);
     final t = await DB.listarTareas();
     expect(t.first['titulo'], 'Nuevo');
     expect(t.first['completada'], 1);
