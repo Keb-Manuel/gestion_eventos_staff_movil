@@ -1,65 +1,56 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:gestion_eventos_staff_movil/models/post.dart';
-import 'package:gestion_eventos_staff_movil/screens/posts_screen.dart';
-import 'package:gestion_eventos_staff_movil/services/post_service.dart';
-
-class FakePostService implements PostService {
-  final ResultadoCarga resultado;
-  FakePostService(this.resultado);
-
-  @override
-  Future<ResultadoCarga> obtenerPosts() async => resultado;
-
-  @override
-  Future<int> pendientes() async => 0;
-
-  @override
-  Future<void> crear({
-    required int userId,
-    required String title,
-    required String body,
-  }) async {}
-
-  @override
-  Future<void> actualizar(Post p) async {}
-
-  @override
-  Future<void> eliminar(int id) async {}
-
-  @override
-  Future<void> marcarSincronizado() async {}
-}
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:gestion_eventos_staff_movil/database/db.dart';
 
 void main() {
-  setUp(() {
-    SharedPreferences.setMockInitialValues({
-      'nombre_usuario': 'Tester',
-    });
+  setUpAll(() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   });
 
-  testWidgets('PostsScreen muestra título, spinner y lista vacía',
-      (tester) async {
-    final fake = FakePostService(
-      const ResultadoCarga(posts: [], offline: false),
-    );
+  setUp(() async => DB.reiniciarParaTests());
+  tearDown(() async => DB.reiniciarParaTests());
 
-    await tester.pumpWidget(
-      MaterialApp(home: PostsScreen(service: fake)),
-    );
+  test('insertar y listar', () async {
+    final id = await DB.insertarTarea(titulo: 'Comprar', descripcion: 'Leche');
+    final tareas = await DB.listarTareas();
+    expect(tareas, hasLength(1));
+    expect(tareas.first['id'], id);
+    expect(tareas.first['titulo'], 'Comprar');
+    expect(tareas.first['completada'], 0);
+  });
 
-    expect(find.text('Publicaciones REST'), findsOneWidget);
+  test('toggle completada', () async {
+    final id = await DB.insertarTarea(titulo: 'X', descripcion: '');
+    await DB.toggleCompletada(id, true);
+    expect(await DB.listarTareas(soloCompletadas: true), hasLength(1));
+  });
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  test('filtro pendientes', () async {
+    await DB.insertarTarea(titulo: 'A', descripcion: '');
+    final id2 = await DB.insertarTarea(titulo: 'B', descripcion: '');
+    await DB.toggleCompletada(id2, true);
 
-    await tester.pumpAndSettle();
-    expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.text('No hay publicaciones'), findsOneWidget);
+    final pendientes = await DB.listarTareas(soloCompletadas: false);
+    expect(pendientes, hasLength(1));
+    expect(pendientes.first['titulo'], 'A');
+  });
 
-    expect(find.text('Bienvenido, Tester'), findsOneWidget);
+  test('actualizar y eliminar', () async {
+    final id = await DB.insertarTarea(titulo: 'Viejo', descripcion: 'X');
+    await DB.actualizarTarea(id,
+        titulo: 'Nuevo', descripcion: 'Y', completada: true);
+    final t = await DB.listarTareas();
+    expect(t.first['titulo'], 'Nuevo');
+    expect(t.first['completada'], 1);
 
-    expect(find.byIcon(Icons.wifi_off), findsNothing);
+    await DB.eliminarTarea(id);
+    expect(await DB.listarTareas(), isEmpty);
+  });
+
+  test('persistencia tras cerrar', () async {
+    await DB.insertarTarea(titulo: 'Persistente', descripcion: 'Sigo aquí');
+    await DB.cerrarParaTests();
+    expect(await DB.listarTareas(), hasLength(1));
   });
 }
