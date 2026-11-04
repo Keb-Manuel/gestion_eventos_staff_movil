@@ -1,15 +1,12 @@
 
+
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+
 
 import 'practica_06_individual/screens/gestor_tareas_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar SQLite para la versión web.
-  databaseFactory = databaseFactoryFfiWeb;
 
   runApp(const MainApp());
 }

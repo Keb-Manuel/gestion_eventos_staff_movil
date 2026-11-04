@@ -45,125 +45,70 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
     switch (_filtro) {
       case 'Pendientes':
         return _tareas.where((t) => !t.completada).toList();
+
       case 'Completadas':
         return _tareas.where((t) => t.completada).toList();
+
       default:
         return _tareas;
     }
   }
 
   Future<void> _cambiarFiltro(String filtro) async {
-    setState(() => _filtro = filtro);
+    setState(() {
+      _filtro = filtro;
+    });
+
     await _preferencias.guardarFiltro(filtro);
   }
 
   Future<void> _mostrarFormulario({Tarea? tarea}) async {
-    final tituloController = TextEditingController(
-      text: tarea?.titulo ?? '',
-    );
-
-    final descripcionController = TextEditingController(
-      text: tarea?.descripcion ?? '',
-    );
-
-    final formKey = GlobalKey<FormState>();
-
-    await showDialog(
+    final guardado = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(tarea == null ? 'Nueva tarea' : 'Editar tarea'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: tituloController,
-                  decoration: const InputDecoration(
-                    labelText: 'Título',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Escribe un título';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: descripcionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Descripción',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Escribe una descripción';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-
-                final nuevaTarea = Tarea(
-                  id: tarea?.id,
-                  titulo: tituloController.text.trim(),
-                  descripcion: descripcionController.text.trim(),
-                  completada: tarea?.completada ?? false,
-                );
-
-                if (tarea == null) {
-                  await _db.insertarTarea(nuevaTarea);
-                } else {
-                  await _db.actualizarTarea(nuevaTarea);
-                }
-
-                if (!dialogContext.mounted) return;
-
-                Navigator.pop(dialogContext);
-                await _cargarTareas();
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
+        return _FormularioTareaDialog(
+          tarea: tarea,
+          onGuardar: (nuevaTarea) async {
+            if (tarea == null) {
+              await _db.insertarTarea(nuevaTarea);
+            } else {
+              await _db.actualizarTarea(nuevaTarea);
+            }
+          },
         );
       },
     );
 
-    tituloController.dispose();
-    descripcionController.dispose();
+    if (guardado == true && mounted) {
+      await _cargarTareas();
+    }
   }
 
   Future<void> _eliminarTarea(Tarea tarea) async {
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Eliminar tarea'),
-        content: Text('¿Deseas eliminar "${tarea.titulo}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Eliminar tarea'),
+          content: Text(
+            '¿Deseas eliminar "${tarea.titulo}"?',
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmar == true) {
@@ -173,7 +118,10 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
   }
 
   Future<void> _cambiarEstado(Tarea tarea, bool? valor) async {
-    final actualizada = tarea.copyWith(completada: valor ?? false);
+    final actualizada = tarea.copyWith(
+      completada: valor ?? false,
+    );
+
     await _db.cambiarEstado(actualizada);
     await _cargarTareas();
   }
@@ -187,13 +135,17 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
         title: const Text('Gestor de tareas offline'),
         centerTitle: true,
       ),
+
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _mostrarFormulario(),
         icon: const Icon(Icons.add),
         label: const Text('Nueva tarea'),
       ),
+
       body: _cargando
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
           : Column(
               children: [
                 Padding(
@@ -208,7 +160,9 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       const SizedBox(height: 12),
+
                       DropdownButtonFormField<String>(
                         initialValue: _filtro,
                         decoration: const InputDecoration(
@@ -230,16 +184,21 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
                           ),
                         ],
                         onChanged: (valor) {
-                          if (valor != null) _cambiarFiltro(valor);
+                          if (valor != null) {
+                            _cambiarFiltro(valor);
+                          }
                         },
                       ),
                     ],
                   ),
                 ),
+
                 Expanded(
                   child: tareas.isEmpty
                       ? const Center(
-                          child: Text('No hay tareas para mostrar'),
+                          child: Text(
+                            'No hay tareas para mostrar',
+                          ),
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.only(
@@ -255,9 +214,11 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
                               child: ListTile(
                                 leading: Checkbox(
                                   value: tarea.completada,
-                                  onChanged: (valor) =>
-                                      _cambiarEstado(tarea, valor),
+                                  onChanged: (valor) {
+                                    _cambiarEstado(tarea, valor);
+                                  },
                                 ),
+
                                 title: Text(
                                   tarea.titulo,
                                   style: TextStyle(
@@ -267,11 +228,15 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
                                         : TextDecoration.none,
                                   ),
                                 ),
+
                                 subtitle: Text(tarea.descripcion),
+
                                 trailing: PopupMenuButton<String>(
                                   onSelected: (opcion) {
                                     if (opcion == 'editar') {
-                                      _mostrarFormulario(tarea: tarea);
+                                      _mostrarFormulario(
+                                        tarea: tarea,
+                                      );
                                     } else if (opcion == 'eliminar') {
                                       _eliminarTarea(tarea);
                                     }
@@ -294,6 +259,171 @@ class _GestorTareasPageState extends State<GestorTareasPage> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+// FORMULARIO PARA CREAR Y EDITAR TAREAS
+
+class _FormularioTareaDialog extends StatefulWidget {
+  final Tarea? tarea;
+  final Future<void> Function(Tarea) onGuardar;
+
+  const _FormularioTareaDialog({
+    required this.tarea,
+    required this.onGuardar,
+  });
+
+  @override
+  State<_FormularioTareaDialog> createState() =>
+      _FormularioTareaDialogState();
+}
+
+class _FormularioTareaDialogState
+    extends State<_FormularioTareaDialog> {
+  late final TextEditingController _tituloController;
+  late final TextEditingController _descripcionController;
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  bool _guardando = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _tituloController = TextEditingController(
+      text: widget.tarea?.titulo ?? '',
+    );
+
+    _descripcionController = TextEditingController(
+      text: widget.tarea?.descripcion ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _tituloController.dispose();
+    _descripcionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _guardar() async {
+    if (!_formKey.currentState!.validate() || _guardando) {
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    final nuevaTarea = Tarea(
+      id: widget.tarea?.id,
+      titulo: _tituloController.text.trim(),
+      descripcion: _descripcionController.text.trim(),
+      completada: widget.tarea?.completada ?? false,
+    );
+
+    setState(() {
+      _guardando = true;
+    });
+
+    try {
+      await widget.onGuardar(nuevaTarea);
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _guardando = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se pudo guardar la tarea: $e',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+
+      title: Text(
+        widget.tarea == null
+            ? 'Nueva tarea'
+            : 'Editar tarea',
+      ),
+
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _tituloController,
+              decoration: const InputDecoration(
+                labelText: 'Título',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Escribe un título';
+                }
+
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            TextFormField(
+              controller: _descripcionController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Descripción',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Escribe una descripción';
+                }
+
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+
+      actions: [
+        TextButton(
+          onPressed: _guardando
+              ? null
+              : () {
+                  Navigator.pop(context, false);
+                },
+          child: const Text('Cancelar'),
+        ),
+
+        ElevatedButton(
+          onPressed: _guardando ? null : _guardar,
+          child: _guardando
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text('Guardar'),
+        ),
+      ],
     );
   }
 }
