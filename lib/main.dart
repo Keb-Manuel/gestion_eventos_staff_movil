@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';                          
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';  
 
 import 'screens/posts_screen.dart';
 
-void main() {
+Future<void> main() async {                       
+  WidgetsFlutterBinding.ensureInitialized();      
+  databaseFactory = databaseFactoryFfiWeb;        
   runApp(const MyApp());
 }
 
@@ -15,9 +19,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Práctica 05 - API REST',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
       home: const PostsScreen(),

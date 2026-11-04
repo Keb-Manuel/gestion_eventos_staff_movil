@@ -12,6 +12,8 @@ class PostDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final idVisible = post.remoteId ?? post.id;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle de publicación'),
@@ -23,13 +25,12 @@ class PostDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Identificador de la publicación.
             Center(
               child: CircleAvatar(
                 radius: 35,
                 backgroundColor: Colors.blue,
                 child: Text(
-                  '${post.id}',
+                  '$idVisible',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -38,9 +39,21 @@ class PostDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
-
+            if (post.pendienteSincronizar) ...[
+              const SizedBox(height: 12),
+              Center(
+                child: Chip(
+                  avatar: const Icon(
+                    Icons.cloud_upload,
+                    size: 18,
+                    color: Colors.orange,
+                  ),
+                  backgroundColor: Colors.orange.shade100,
+                  label: const Text('Pendiente de sincronizar'),
+                ),
+              ),
+            ],
             const SizedBox(height: 25),
-
             const Text(
               'Título',
               style: TextStyle(
@@ -49,9 +62,7 @@ class PostDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               post.title,
               style: const TextStyle(
@@ -59,9 +70,7 @@ class PostDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 25),
-
             const Text(
               'Contenido',
               style: TextStyle(
@@ -70,9 +79,7 @@ class PostDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               post.body,
               textAlign: TextAlign.justify,
@@ -81,11 +88,8 @@ class PostDetailScreen extends StatelessWidget {
                 height: 1.6,
               ),
             ),
-
             const SizedBox(height: 25),
-
             const Divider(),
-
             Text(
               'ID del usuario: ${post.userId}',
               style: const TextStyle(
@@ -93,14 +97,25 @@ class PostDetailScreen extends StatelessWidget {
                 color: Colors.grey,
               ),
             ),
-
             Text(
-              'ID de publicación: ${post.id}',
+              'ID de publicación: $idVisible',
               style: const TextStyle(
                 fontSize: 15,
                 color: Colors.grey,
               ),
             ),
+            if (post.pendienteSincronizar)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text(
+                  'Este post tiene cambios locales que aún no se envían al servidor.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.orange,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

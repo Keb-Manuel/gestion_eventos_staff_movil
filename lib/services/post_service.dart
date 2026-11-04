@@ -1,49 +1,82 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../database/db.dart';
 import '../models/post.dart';
+import 'preferences_service.dart';
+
+class ResultadoCarga {
+  final List<Post> posts;
+  final bool offline;
+  final String? error;
+  const ResultadoCarga(
+      {required this.posts, required this.offline, this.error});
+}
 
 class PostService {
   static const String _baseUrl = 'https://jsonplaceholder.typicode.com';
 
   final http.Client _client;
+  final PreferencesService _prefs;
 
-  PostService({http.Client? client}) : _client = client ?? http.Client();
+  PostService({http.Client? client, PreferencesService? prefs})
+      : _client = client ?? http.Client(),
+        _prefs = prefs ?? PreferencesService();
 
-  // Obtiene las publicaciones desde la API.
-  Future<List<Post>> getPosts() async {
+  Future<ResultadoCarga> obtenerPosts() async {
     try {
-      final response = await _client
+      final r = await _client
           .get(Uri.parse('$_baseUrl/posts'))
           .timeout(const Duration(seconds: 15));
 
-      // Validar el código de respuesta HTTP.
-      if (response.statusCode != 200) {
-        throw Exception(
-          'Error del servidor. Código HTTP: ${response.statusCode}',
-        );
+      if (r.statusCode != 200) {
+        throw Exception('Error del servidor. Código HTTP: ${r.statusCode}');
       }
 
-      // Decodificar la respuesta JSON.
-      final List<dynamic> data = jsonDecode(response.body);
+      final List<dynamic> data = jsonDecode(r.body);
+      for (final j in data.take(20)) {
+        final p = Post.fromJson(j as Map<String, dynamic>);
+        await DB.upsertRemoto(
+          remoteId: p.remoteId!,
+          userId: p.userId,
+          title: p.title,
+          body: p.body,
+        );
+      }
+      await _prefs.guardarUltimaSync(DateTime.now());
 
-      // Convertir los elementos JSON en objetos Post.
-      final posts = data
-          .map(
-            (json) => Post.fromJson(
-              json as Map<String, dynamic>,
-            ),
-          )
-          .toList();
-
-      // Devolver únicamente las primeras 20 publicaciones.
-      return posts.take(20).toList();
-    } on http.ClientException {
-      throw Exception('No se pudo conectar con el servidor.');
-    } on FormatException {
-      throw Exception('La respuesta del servidor no es un JSON válido.');
-    } on Exception {
-      rethrow;
+      final filas = await DB.listar();
+      return ResultadoCarga(
+        posts: filas.map(Post.fromRow).toList(),
+        offline: false,
+      );
+    } on Exception catch (e) {
+      final filas = await DB.listar();
+      return ResultadoCarga(
+        posts: filas.map(Post.fromRow).toList(),
+        offline: true,
+        error: e.toString(),
+      );
     }
   }
+
+  Future<void> crear({
+    required int userId,
+    required String title,
+    required String body,
+  }) =>
+      DB.insertarLocal(userId: userId, title: title, body: body);
+
+  Future<void> actualizar(Post p) => DB.actualizarLocal(
+        p.id,
+        userId: p.userId,
+        title: p.title,
+        body: p.body,
+      );
+
+  Future<void> eliminar(int id) => DB.eliminar(id);
+
+  Future<void> marcarSincronizado() => DB.marcarTodosSincronizados();
+
+  Future<int> pendientes() => DB.contarPendientes();
 }
