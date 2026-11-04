@@ -1,45 +1,45 @@
 import 'package:flutter/material.dart';
 
-import '../models/publicacion.dart';
-import '../services/publicacion_service.dart';
-import 'detalle_publicacion_page.dart';
+import '../models/agente.dart';
+import '../services/agente_service.dart';
+import 'detalle_agente_page.dart';
 
-class PublicacionesPage extends StatefulWidget {
-  const PublicacionesPage({super.key});
+class AgentesPage extends StatefulWidget {
+  const AgentesPage({super.key});
 
   @override
-  State<PublicacionesPage> createState() => _PublicacionesPageState();
+  State<AgentesPage> createState() => _AgentesPageState();
 }
 
-class _PublicacionesPageState extends State<PublicacionesPage> {
-  final PublicacionService servicio = PublicacionService();
+class _AgentesPageState extends State<AgentesPage> {
+  final AgenteService servicio = AgenteService();
 
-  late Future<List<Publicacion>> futuroPublicaciones;
+  late Future<List<Agente>> futuroAgentes;
 
   @override
   void initState() {
     super.initState();
-    futuroPublicaciones = servicio.obtenerPublicaciones();
+    futuroAgentes = servicio.obtenerAgentes();
   }
 
-  Future<void> actualizarPublicaciones() async {
+  Future<void> actualizarAgentes() async {
     setState(() {
-      futuroPublicaciones = servicio.obtenerPublicaciones();
+      futuroAgentes = servicio.obtenerAgentes();
     });
 
-    await futuroPublicaciones;
+    await futuroAgentes;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Publicaciones REST'),
-        backgroundColor: Colors.blue,
+        title: const Text('Agentes de VALORANT'),
+        backgroundColor: const Color(0xFFFF4655),
         foregroundColor: Colors.white,
       ),
-      body: FutureBuilder<List<Publicacion>>(
-        future: futuroPublicaciones,
+      body: FutureBuilder<List<Agente>>(
+        future: futuroAgentes,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -52,10 +52,12 @@ class _PublicacionesPageState extends State<PublicacionesPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Error al cargar las publicaciones'),
+                  const Icon(Icons.error_outline, size: 50),
+                  const SizedBox(height: 10),
+                  const Text('Error al cargar los agentes'),
                   const SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: actualizarPublicaciones,
+                    onPressed: actualizarAgentes,
                     child: const Text('Reintentar'),
                   ),
                 ],
@@ -63,15 +65,15 @@ class _PublicacionesPageState extends State<PublicacionesPage> {
             );
           }
 
-          final publicaciones = snapshot.data ?? [];
+          final agentes = snapshot.data ?? [];
 
           return RefreshIndicator(
-            onRefresh: actualizarPublicaciones,
+            onRefresh: actualizarAgentes,
             child: ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: publicaciones.length,
+              itemCount: agentes.length,
               itemBuilder: (context, index) {
-                final publicacion = publicaciones[index];
+                final agente = agentes[index];
 
                 return Card(
                   margin: const EdgeInsets.symmetric(
@@ -80,25 +82,26 @@ class _PublicacionesPageState extends State<PublicacionesPage> {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      child: Text('${publicacion.id}'),
+                      backgroundColor: const Color(0xFFFF4655),
+                      backgroundImage: agente.icono.isNotEmpty
+                          ? NetworkImage(agente.icono)
+                          : null,
+                      child: agente.icono.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
                     ),
                     title: Text(
-                      publicacion.titulo,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      agente.nombre,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(
-                      publicacion.contenido,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    subtitle: Text(agente.rol),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DetallePublicacionPage(
-                            publicacion: publicacion,
+                          builder: (context) => DetalleAgentePage(
+                            agente: agente,
                           ),
                         ),
                       );
