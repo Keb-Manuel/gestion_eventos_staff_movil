@@ -1,30 +1,45 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
-import 'package:gestion_eventos_staff_movil/main.dart';
+// ⚠️ Cambia "gestion_eventos_staff_movil" por el `name:` real de tu pubspec.yaml
+import 'package:gestion_eventos_staff_movil/screens/posts_screen.dart';
+import 'package:gestion_eventos_staff_movil/services/post_service.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('PostsScreen muestra el título y el spinner inicial',
+      (tester) async {
+    // Cliente falso: NO pega a la red real.
+    // Resuelve en el siguiente microtask → no deja Timer pendiente.
+    final mock = MockClient((request) async {
+      return http.Response(
+        jsonEncode(<Map<String, dynamic>>[]), // lista vacía
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PostsScreen(service: PostService(client: mock)),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // 1. Título de la AppBar
+    expect(find.text('Publicaciones REST'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // 2. Estado inicial del FutureBuilder
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    // 3. Tras asentarse → lista vacía (no hay spinner)
+    await tester.pumpAndSettle();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(
+      find.text('No hay publicaciones disponibles'),
+      findsOneWidget,
+    );
   });
 }
