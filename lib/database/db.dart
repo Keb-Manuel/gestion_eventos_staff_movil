@@ -3,125 +3,98 @@ import 'package:sqflite/sqflite.dart';
 
 class DB {
   static Database? _db;
+  static const _nombreDb = 'tareas.db';
 
   static Future<Database> get database async {
     if (_db != null) return _db!;
-    final ruta = join(await getDatabasesPath(), 'posts.db');
+    final ruta = join(await getDatabasesPath(), _nombreDb);
     _db = await openDatabase(
       ruta,
       version: 1,
-      onCreate: (db, version) => db.execute('''
-        CREATE TABLE posts(
+      onCreate: (db, v) => db.execute('''
+        CREATE TABLE tareas(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          remote_id INTEGER UNIQUE,
-          user_id INTEGER NOT NULL,
-          title TEXT NOT NULL,
-          body TEXT NOT NULL,
-          pendiente_sincronizar INTEGER NOT NULL DEFAULT 0
+          titulo TEXT NOT NULL,
+          descripcion TEXT NOT NULL,
+          completada INTEGER NOT NULL DEFAULT 0,
+          fecha_creacion TEXT NOT NULL
         )
       '''),
     );
     return _db!;
   }
 
-  static Future<void> reiniciarParaTests() async {
-    if (_db != null) {
-      await _db!.close();
-      _db = null;
-    }
-    try {
-      final ruta = join(await getDatabasesPath(), 'posts.db');
-      await databaseFactory.deleteDatabase(ruta);
-    } catch (_) {}
-  }
-
-  // ---------- CRUD local ----------
-  static Future<int> insertarLocal({
-    required int userId,
-    required String title,
-    required String body,
+  // ── CRUD ────────────────────────────────────────────────────
+  static Future<int> insertarTarea({
+    required String titulo,
+    required String descripcion,
   }) async {
     final db = await database;
-    return db.insert('posts', {
-      'remote_id': null,
-      'user_id': userId,
-      'title': title,
-      'body': body,
-      'pendiente_sincronizar': 1,
+    return db.insert('tareas', {
+      'titulo': titulo,
+      'descripcion': descripcion,
+      'completada': 0,
+      'fecha_creacion': DateTime.now().toIso8601String(),
     });
   }
 
-  static Future<List<Map<String, dynamic>>> listar() async {
+  static Future<List<Map<String, dynamic>>> listarTareas({
+    bool? soloCompletadas,
+  }) async {
     final db = await database;
-    return db.query('posts', orderBy: 'id DESC');
+    String? where;
+    if (soloCompletadas == true) where = 'completada = 1';
+    if (soloCompletadas == false) where = 'completada = 0';
+    return db.query('tareas', where: where, orderBy: 'id DESC');
   }
 
-  static Future<int> actualizarLocal(
+  static Future<int> actualizarTarea(
     int id, {
-    required int userId,
-    required String title,
-    required String body,
+    required String titulo,
+    required String descripcion,
+    required bool completada,
   }) async {
     final db = await database;
     return db.update(
-      'posts',
+      'tareas',
       {
-        'user_id': userId,
-        'title': title,
-        'body': body,
-        'pendiente_sincronizar': 1,
+        'titulo': titulo,
+        'descripcion': descripcion,
+        'completada': completada ? 1 : 0,
       },
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  static Future<int> eliminar(int id) async {
+  static Future<int> toggleCompletada(int id, bool completada) async {
     final db = await database;
-    return db.delete('posts', where: 'id = ?', whereArgs: [id]);
+    return db.update(
+      'tareas',
+      {'completada': completada ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
-  // ---------- Sincronización con la API ----------
-  static Future<int> upsertRemoto({
-    required int remoteId,
-    required int userId,
-    required String title,
-    required String body,
-  }) async {
+  static Future<int> eliminarTarea(int id) async {
     final db = await database;
-    final existe = await db.query('posts',
-        where: 'remote_id = ?', whereArgs: [remoteId], limit: 1);
-    if (existe.isEmpty) {
-      return db.insert('posts', {
-        'remote_id': remoteId,
-        'user_id': userId,
-        'title': title,
-        'body': body,
-        'pendiente_sincronizar': 0,
-      });
+    return db.delete('tareas', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ── utilidades para tests ───────────────────────────────────
+  static Future<void> cerrarParaTests() async {
+    if (_db != null) {
+      await _db!.close();
+      _db = null;
     }
-    if (existe.first['pendiente_sincronizar'] == 1) return 0;
-    return db.update(
-      'posts',
-      {'user_id': userId, 'title': title, 'body': body},
-      where: 'remote_id = ?',
-      whereArgs: [remoteId],
-    );
   }
 
-  static Future<int> contarPendientes() async {
-    final db = await database;
-    final r = await db.rawQuery(
-        'SELECT COUNT(*) AS c FROM posts WHERE pendiente_sincronizar = 1');
-    return (r.first['c'] as int?) ?? 0;
-  }
-
-  static Future<int> marcarTodosSincronizados() async {
-    final db = await database;
-    return db.update(
-      'posts',
-      {'pendiente_sincronizar': 0},
-      where: 'pendiente_sincronizar = 1',
-    );
+  static Future<void> reiniciarParaTests() async {
+    await cerrarParaTests();
+    try {
+      final ruta = join(await getDatabasesPath(), _nombreDb);
+      await databaseFactory.deleteDatabase(ruta);
+    } catch (_) {}
   }
 }
