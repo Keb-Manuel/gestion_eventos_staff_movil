@@ -24,10 +24,8 @@ class PostService {
         );
       }
 
-      // Decodificar la respuesta JSON.
       final List<dynamic> data = jsonDecode(response.body);
 
-      // Convertir los elementos JSON en objetos Post.
       final posts = data
           .map(
             (json) => Post.fromJson(
@@ -36,7 +34,6 @@ class PostService {
           )
           .toList();
 
-      // Devolver únicamente las primeras 20 publicaciones.
       return posts.take(20).toList();
     } on http.ClientException {
       throw Exception('No se pudo conectar con el servidor.');
