@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,7 +10,7 @@ void main() {
 
   runApp(
     ChangeNotifierProvider(
-      create: (_) => UbicacionProvider(),
+      create: (_) => UbicacionProvider()..cargarPuntos(),
       child: const MainApp(),
     ),
   );

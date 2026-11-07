@@ -1,323 +1,398 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/punto_interes.dart';
 import '../providers/ubicacion_provider.dart';
 
-class UbicacionPage extends StatefulWidget {
+class UbicacionPage extends StatelessWidget {
   const UbicacionPage({super.key});
 
-  @override
-  State<UbicacionPage> createState() => _UbicacionPageState();
-}
+  String _formatearDistancia(double? distancia) {
+    if (distancia == null) return 'No disponible';
 
-class _UbicacionPageState extends State<UbicacionPage> {
-  @override
-  void initState() {
-    super.initState();
+    if (distancia < 1000) {
+      return '${distancia.toStringAsFixed(0)} m';
+    }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<UbicacionProvider>().cargarPuntos();
-    });
+    return '${(distancia / 1000).toStringAsFixed(2)} km';
   }
 
-  Future<void> _agregarPunto() async {
-    final nombreController = TextEditingController();
-    final latitudController = TextEditingController();
-    final longitudController = TextEditingController();
-
+  Future<void> _agregarPunto(BuildContext context) async {
     final punto = await showDialog<PuntoInteres>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Nuevo punto de interés'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nombreController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del lugar',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: latitudController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Latitud',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: longitudController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
-                  ),
-                  decoration: const InputDecoration(
-                    labelText: 'Longitud',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final nombre = nombreController.text.trim();
-                final latitud = double.tryParse(latitudController.text.trim());
-                final longitud =
-                    double.tryParse(longitudController.text.trim());
-
-                if (nombre.isEmpty ||
-                    latitud == null ||
-                    longitud == null ||
-                    latitud < -90 ||
-                    latitud > 90 ||
-                    longitud < -180 ||
-                    longitud > 180) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Ingresa un nombre y coordenadas válidas.',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-
-                Navigator.pop(
-                  dialogContext,
-                  PuntoInteres(
-                    nombre: nombre,
-                    latitud: latitud,
-                    longitud: longitud,
-                  ),
-                );
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        );
-      },
+      builder: (_) => const _FormularioPuntoDialog(),
     );
 
-    nombreController.dispose();
-    latitudController.dispose();
-    longitudController.dispose();
+    if (punto == null || !context.mounted) return;
 
-    if (punto != null && mounted) {
-      try {
-        await context.read<UbicacionProvider>().agregarPunto(punto);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No se pudo guardar: $e')),
-          );
-        }
-      }
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await context.read<UbicacionProvider>().agregarPunto(punto);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo guardar: $e')),
+      );
     }
-  }
-
-  String _formatearDistancia(double distancia) {
-    if (distancia >= 1000) {
-      return '${(distancia / 1000).toStringAsFixed(2)} km';
-    }
-
-    return '${distancia.toStringAsFixed(0)} m';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GPS y geolocalización'),
+        title: const Text('Práctica 8 - Geolocalización'),
         centerTitle: true,
       ),
       body: Consumer<UbicacionProvider>(
         builder: (context, provider, child) {
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.my_location, size: 28),
-                          SizedBox(width: 8),
+          return RefreshIndicator(
+            onRefresh: provider.obtenerUbicacion,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Mi ubicación actual',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (provider.cargando)
+                          const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        else if (provider.posicionActual != null) ...[
                           Text(
-                            'Mi ubicación actual',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                            'Latitud: ${provider.posicionActual!.latitude}',
+                          ),
+                          Text(
+                            'Longitud: ${provider.posicionActual!.longitude}',
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Ubicación obtenida correctamente.',
+                          ),
+                        ] else
+                          Text(
+                            provider.error ??
+                                'Presiona el botón para obtener tu ubicación.',
+                          ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: provider.cargando
+                                ? null
+                                : provider.obtenerUbicacion,
+                            icon: const Icon(Icons.my_location),
+                            label: const Text('Obtener mi ubicación'),
+                          ),
+                        ),
+                        if (provider.posicionActual != null) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final messenger =
+                                    ScaffoldMessenger.of(context);
+
+                                final posicion = provider.posicionActual!;
+
+                                try {
+                                  await provider.abrirMapa(
+                                    PuntoInteres(
+                                      nombre: 'Mi ubicación',
+                                      latitud: posicion.latitude,
+                                      longitud: posicion.longitude,
+                                    ),
+                                  );
+                                } catch (e) {
+                                  if (!context.mounted) return;
+
+                                  messenger.showSnackBar(
+                                    SnackBar(content: Text('$e')),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.map),
+                              label: const Text('Abrir en Google Maps'),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-                      if (provider.cargando)
-                        const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                      else if (provider.error != null)
-                        Text(
-                          provider.error!,
-                          style: const TextStyle(color: Colors.red),
-                        )
-                      else if (provider.posicionActual != null) ...[
-                        Text(
-                          'Latitud: ${provider.posicionActual!.latitude}',
-                        ),
-                        Text(
-                          'Longitud: ${provider.posicionActual!.longitude}',
-                        ),
-                        Text(
-                          'Precisión: '
-                          '${provider.posicionActual!.accuracy.toStringAsFixed(2)} metros',
-                        ),
-                      ] else
-                        const Text(
-                          'Todavía no se ha obtenido la ubicación.',
-                        ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: provider.cargando
-                              ? null
-                              : provider.obtenerUbicacion,
-                          icon: const Icon(Icons.location_searching),
-                          label: const Text('Obtener ubicación'),
-                        ),
-                      ),
-                      if (provider.posicionActual != null)
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              final posicion = provider.posicionActual!;
-
-                              provider.abrirMapa(
-                                PuntoInteres(
-                                  nombre: 'Mi ubicación',
-                                  latitud: posicion.latitude,
-                                  longitud: posicion.longitude,
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.map),
-                            label: const Text('Abrir en Google Maps'),
-                          ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Puntos de interés',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Puntos de interés',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _agregarPunto,
-                    icon: const Icon(Icons.add_location_alt),
-                    label: const Text('Agregar'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (provider.puntos.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      'No hay puntos registrados. Agrega al menos tres '
-                      'lugares para completar el ejercicio.',
+                    ElevatedButton.icon(
+                      onPressed: () => _agregarPunto(context),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Agregar'),
                     ),
-                  ),
-                )
-              else
-                ...List.generate(provider.puntos.length, (indice) {
-                  final punto = provider.puntos[indice];
-                  final distancia = provider.distanciaAlPunto(punto);
-
-                  return Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.place),
-                      title: Text(punto.nombre),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Latitud: ${punto.latitud}'),
-                          Text('Longitud: ${punto.longitud}'),
-                          Text(
-                            distancia == null
-                                ? 'Obtén tu ubicación para calcular la distancia.'
-                                : 'Distancia: ${_formatearDistancia(distancia)}',
-                          ),
-                        ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (provider.puntos.isEmpty)
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Center(
+                        child: Text(
+                          'Todavía no tienes puntos guardados.',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      isThreeLine: true,
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (opcion) async {
-                          if (opcion == 'mapa') {
-                            final messenger = ScaffoldMessenger.of(context);
+                    ),
+                  )
+                else
+                  ...provider.puntos.asMap().entries.map((entry) {
+                    final indice = entry.key;
+                    final punto = entry.value;
 
-                            try {
-                              await provider.abrirMapa(punto);
-                            } catch (e) {
-                              if (!mounted) return;
+                    final distancia =
+                        provider.distanciaAlPunto(punto);
 
-                              messenger.showSnackBar(
-                                SnackBar(content: Text('$e')),
-                              );
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          child: Icon(Icons.place),
+                        ),
+                        title: Text(punto.nombre),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Latitud: ${punto.latitud}'),
+                            Text('Longitud: ${punto.longitud}'),
+                            Text(
+                              distancia == null
+                                  ? 'Obtén tu ubicación para calcular la distancia.'
+                                  : 'Distancia: ${_formatearDistancia(distancia)}',
+                            ),
+                          ],
+                        ),
+                        isThreeLine: true,
+                        trailing: PopupMenuButton<String>(
+                          onSelected: (opcion) async {
+                            final messenger =
+                                ScaffoldMessenger.of(context);
+
+                            if (opcion == 'mapa') {
+                              try {
+                                await provider.abrirMapa(punto);
+                              } catch (e) {
+                                if (!context.mounted) return;
+
+                                messenger.showSnackBar(
+                                  SnackBar(content: Text('$e')),
+                                );
+                              }
+                            } else if (opcion == 'eliminar') {
+                              try {
+                                await provider.eliminarPunto(indice);
+                              } catch (e) {
+                                if (!context.mounted) return;
+
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'No se pudo eliminar: $e',
+                                    ),
+                                  ),
+                                );
+                              }
                             }
-                          } else if (opcion == 'eliminar') {
-                            await provider.eliminarPunto(indice);
-                          }
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(
-                            value: 'mapa',
-                            child: Text('Abrir en Google Maps'),
-                          ),
-                          PopupMenuItem(
-                            value: 'eliminar',
-                            child: Text('Eliminar'),
-                          ),
-                        ],
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(
+                              value: 'mapa',
+                              child: Text('Abrir en Google Maps'),
+                            ),
+                            PopupMenuItem(
+                              value: 'eliminar',
+                              child: Text('Eliminar'),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }),
-            ],
+                    );
+                  }),
+              ],
+            ),
           );
         },
       ),
+    );
+  }
+}
+
+class _FormularioPuntoDialog extends StatefulWidget {
+  const _FormularioPuntoDialog();
+
+  @override
+  State<_FormularioPuntoDialog> createState() =>
+      _FormularioPuntoDialogState();
+}
+
+class _FormularioPuntoDialogState
+    extends State<_FormularioPuntoDialog> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _nombreController = TextEditingController();
+  final _latitudController = TextEditingController();
+  final _longitudController = TextEditingController();
+
+  String? _error;
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _latitudController.dispose();
+    _longitudController.dispose();
+    super.dispose();
+  }
+
+  void _guardar() {
+    if (!_formKey.currentState!.validate()) return;
+
+    final latitud = double.tryParse(
+      _latitudController.text.trim(),
+    );
+
+    final longitud = double.tryParse(
+      _longitudController.text.trim(),
+    );
+
+    if (latitud == null ||
+        longitud == null ||
+        latitud < -90 ||
+        latitud > 90 ||
+        longitud < -180 ||
+        longitud > 180) {
+      setState(() {
+        _error = 'Ingresa coordenadas válidas.';
+      });
+      return;
+    }
+
+    Navigator.of(context).pop(
+      PuntoInteres(
+        nombre: _nombreController.text.trim(),
+        latitud: latitud,
+        longitud: longitud,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Agregar punto de interés'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nombreController,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del lugar',
+                  prefixIcon: Icon(Icons.place),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Escribe el nombre del lugar.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _latitudController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Latitud',
+                  prefixIcon: Icon(Icons.location_on),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Ingresa la latitud.';
+                  }
+                  if (double.tryParse(value.trim()) == null) {
+                    return 'Ingresa un número válido.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _longitudController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Longitud',
+                  prefixIcon: Icon(Icons.location_on),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Ingresa la longitud.';
+                  }
+                  if (double.tryParse(value.trim()) == null) {
+                    return 'Ingresa un número válido.';
+                  }
+                  return null;
+                },
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: _guardar,
+          child: const Text('Guardar'),
+        ),
+      ],
     );
   }
 }
