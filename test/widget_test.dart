@@ -3,11 +3,19 @@ import 'package:gestion_eventos_staff_movil/main.dart';
 
 void main() {
   testWidgets(
-    'La aplicación muestra el gestor de notas offline',
+    'La aplicación muestra la pantalla de cámara y sensores',
     (WidgetTester tester) async {
       await tester.pumpWidget(const MainApp());
 
-      expect(find.text('Gestor de notas offline'), findsOneWidget);
+      expect(
+        find.text('Práctica 9 - Cámara y Sensores'),
+        findsOneWidget,
+      );
+
+      expect(
+        find.text('Bitácora de inspección'),
+        findsOneWidget,
+      );
     },
   );
 }

@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
     <application
-        android:label="gestion_eventos_staff_movil"
+        android:label="Práctica 9 - Cámara y Sensores"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
