@@ -15,7 +15,7 @@
         android:required="false" />
 
     <application
-        android:label="Práctica 10 - Proyecto Integrador"
+        android:label="StockSmart - Inventario"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
