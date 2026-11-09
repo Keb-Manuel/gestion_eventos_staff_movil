@@ -1,32 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:provider/provider.dart';
 
-import 'practica_06/notas_page.dart';
+import 'practica_10_individual/providers/inventario_provider.dart';
+import 'practica_10_individual/screens/inicio_page.dart';
+import 'practica_10_individual/services/notificacion_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  databaseFactory = databaseFactoryFfiWeb;
+  await NotificacionService.inicializar();
 
-  runApp(const MainApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => InventarioProvider(),
+      child: const StockSmartApp(),
+    ),
+  );
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class StockSmartApp extends StatelessWidget {
+  const StockSmartApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Práctica 6',
+      title: 'StockSmart - Inventario',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-        ),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF172554),
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF4F6FA),
       ),
-      home: const NotasPage(),
+      home: const InicioPage(),
     );
   }
 }
