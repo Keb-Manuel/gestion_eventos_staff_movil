@@ -1,30 +1,55 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:gestion_eventos_staff_movil/main.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:gestion_eventos_staff_movil/database/db.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUpAll(() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUp(() async => DB.reiniciarParaTests());
+  tearDown(() async => DB.reiniciarParaTests());
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  test('insertar y listar', () async {
+    final id = await DB.insertarTarea(titulo: 'Comprar', descripcion: 'Leche');
+    final tareas = await DB.listarTareas();
+    expect(tareas, hasLength(1));
+    expect(tareas.first['id'], id);
+    expect(tareas.first['titulo'], 'Comprar');
+    expect(tareas.first['completada'], 0);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('toggle completada', () async {
+    final id = await DB.insertarTarea(titulo: 'X', descripcion: '');
+    await DB.toggleCompletada(id, true);
+    expect(await DB.listarTareas(soloCompletadas: true), hasLength(1));
+  });
+
+  test('filtro pendientes', () async {
+    await DB.insertarTarea(titulo: 'A', descripcion: '');
+    final id2 = await DB.insertarTarea(titulo: 'B', descripcion: '');
+    await DB.toggleCompletada(id2, true);
+
+    final pendientes = await DB.listarTareas(soloCompletadas: false);
+    expect(pendientes, hasLength(1));
+    expect(pendientes.first['titulo'], 'A');
+  });
+
+  test('actualizar y eliminar', () async {
+    final id = await DB.insertarTarea(titulo: 'Viejo', descripcion: 'X');
+    await DB.actualizarTarea(id, titulo: 'Nuevo', descripcion: 'Y', completada: true);
+    final t = await DB.listarTareas();
+    expect(t.first['titulo'], 'Nuevo');
+    expect(t.first['completada'], 1);
+
+    await DB.eliminarTarea(id);
+    expect(await DB.listarTareas(), isEmpty);
+  });
+
+  test('persistencia tras cerrar', () async {
+    await DB.insertarTarea(titulo: 'Persistente', descripcion: 'Sigo aquí');
+    await DB.cerrarParaTests();
+    expect(await DB.listarTareas(), hasLength(1));
   });
 }
