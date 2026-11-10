@@ -13,12 +13,9 @@ class EstadoVacio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mensaje = switch (filtro) {
-      FiltroTareas.todas =>
-        'No hay tareas. Crea la primera con el botón +.',
-      FiltroTareas.pendientes =>
-        'No hay tareas pendientes.',
-      FiltroTareas.completadas =>
-        'No hay tareas completadas.',
+      FiltroTareas.todas => 'No hay tareas. Crea la primera con el botón +.',
+      FiltroTareas.pendientes => 'No hay tareas pendientes.',
+      FiltroTareas.completadas => 'No hay tareas completadas.',
     };
 
     return Center(

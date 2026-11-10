@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../models/tarea.dart';
 import '../providers/tarea_provider.dart';
-import '../services/preferences_service.dart';
 import '../widgets/encabezado_tareas.dart';
 import '../widgets/estado_vacio.dart';
 import '../widgets/filtro_tareas.dart';
@@ -178,12 +177,10 @@ class TareasPage extends StatelessWidget {
                 nombre: provider.nombre,
                 cantidad: provider.totalTareas,
               ),
-
               FiltroTareasWidget(
                 seleccionado: provider.filtro,
                 onChanged: provider.cambiarFiltro,
               ),
-
               if (provider.error != null)
                 Padding(
                   padding: const EdgeInsets.all(8),
@@ -192,7 +189,6 @@ class TareasPage extends StatelessWidget {
                     style: const TextStyle(color: Colors.red),
                   ),
                 ),
-
               Expanded(
                 child: provider.tareas.isEmpty
                     ? EstadoVacio(filtro: provider.filtro)
@@ -220,8 +216,7 @@ class TareasPage extends StatelessWidget {
                                 } catch (e) {
                                   if (!context.mounted) return;
 
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         'No se pudo cambiar el estado: $e',

@@ -14,8 +14,7 @@ class TareaFormScreen extends StatefulWidget {
   });
 
   @override
-  State<TareaFormScreen> createState() =>
-      _TareaFormScreenState();
+  State<TareaFormScreen> createState() => _TareaFormScreenState();
 }
 
 class _TareaFormScreenState extends State<TareaFormScreen> {
@@ -127,9 +126,7 @@ class _TareaFormScreenState extends State<TareaFormScreen> {
                 return null;
               },
             ),
-
             const SizedBox(height: 16),
-
             TextFormField(
               controller: _descripcionController,
               textCapitalization: TextCapitalization.sentences,
@@ -143,7 +140,6 @@ class _TareaFormScreenState extends State<TareaFormScreen> {
               minLines: 3,
               maxLines: 6,
             ),
-
             if (!esNueva) ...[
               const SizedBox(height: 12),
               SwitchListTile(
@@ -159,9 +155,7 @@ class _TareaFormScreenState extends State<TareaFormScreen> {
                 },
               ),
             ],
-
             const SizedBox(height: 24),
-
             BotonTarea(
               texto: _guardando ? 'Guardando...' : 'Guardar',
               icono: Icons.save,

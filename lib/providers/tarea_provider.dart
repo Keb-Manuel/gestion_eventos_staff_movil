@@ -12,8 +12,7 @@ class TareaProvider extends ChangeNotifier {
     TareaService? tareaService,
     PreferenciasService? preferenciasService,
   })  : _tareaService = tareaService ?? TareaService(),
-        _preferenciasService =
-            preferenciasService ?? PreferenciasService();
+        _preferenciasService = preferenciasService ?? PreferenciasService();
 
   List<Tarea> _tareas = [];
 

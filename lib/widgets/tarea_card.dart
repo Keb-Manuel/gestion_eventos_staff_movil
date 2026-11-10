@@ -29,9 +29,7 @@ class TareaCard extends StatelessWidget {
         title: Text(
           tarea.titulo,
           style: TextStyle(
-            decoration: tarea.completada
-                ? TextDecoration.lineThrough
-                : null,
+            decoration: tarea.completada ? TextDecoration.lineThrough : null,
             fontWeight: FontWeight.w600,
           ),
         ),
