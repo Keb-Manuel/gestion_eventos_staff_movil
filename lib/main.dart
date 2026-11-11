@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'sensores_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MainApp());
 }
 
