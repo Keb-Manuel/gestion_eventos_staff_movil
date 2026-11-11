@@ -1,27 +1,27 @@
-
 import 'package:flutter/material.dart';
-import 'sensores_page.dart';
+
+import 'screens/bitacora_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MainApp());
+  runApp(const BitacoraApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class BitacoraApp extends StatelessWidget {
+  const BitacoraApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Bitácora de inspección',
       debugShowCheckedModeBanner: false,
-      title: 'Cámara y Sensores',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
         ),
         useMaterial3: true,
       ),
-      home: const SensoresPage(),
+      home: const BitacoraPage(),
     );
   }
 }

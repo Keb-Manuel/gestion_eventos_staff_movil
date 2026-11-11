@@ -1,33 +1,24 @@
-
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gestion_eventos_staff_movil/sensores_page.dart';
+import 'package:gestion_eventos_staff_movil/main.dart';
 
 void main() {
-  testWidgets('La pantalla de cámara y sensores se muestra',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: SensoresPage(iniciarHardware: false),
-      ),
-    );
+  testWidgets('La bitácora inicia correctamente', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const BitacoraApp());
 
     expect(
-      find.text('Cámara y sensores'),
+      find.text('Bitácora de inspección'),
       findsOneWidget,
     );
 
     expect(
-      find.text('Tomar fotografía'),
+      find.text('Registro de evidencias'),
       findsOneWidget,
     );
 
     expect(
-      find.text('Acelerómetro'),
-      findsOneWidget,
-    );
-
-    expect(
-      find.text('Giroscopio'),
+      find.text('Tomar fotografía y registrar evidencia'),
       findsOneWidget,
     );
   });

@@ -1,8 +1,7 @@
-
 name: gestion_eventos_staff_movil
-description: "Aplicación de cámara y sensores con Flutter."
+description: "Bitacora de inspeccion con Flutter."
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0
 
 environment:
   sdk: ^3.6.2
@@ -11,14 +10,14 @@ dependencies:
   flutter:
     sdk: flutter
 
-  camera: ^0.12.2
+  image_picker: ^1.0.8
   sensors_plus: ^7.1.1
   intl: ^0.20.2
+  permission_handler: ^12.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^5.0.0
 
 flutter:
