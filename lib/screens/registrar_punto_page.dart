@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -13,17 +14,21 @@ class RegistrarPuntoPage extends StatefulWidget {
   });
 
   @override
-  State<RegistrarPuntoPage> createState() => _RegistrarPuntoPageState();
+  State<RegistrarPuntoPage> createState() =>
+      _RegistrarPuntoPageState();
 }
 
-class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
+class _RegistrarPuntoPageState
+    extends State<RegistrarPuntoPage> {
   final _formKey = GlobalKey<FormState>();
+
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
+  final _latitudController = TextEditingController();
+  final _longitudController = TextEditingController();
 
-  Position? posicion;
   bool cargando = false;
-  String mensaje = 'Obtén tu ubicación para registrar el punto.';
+  String mensaje = 'Puedes escribir las coordenadas o utilizar el GPS.';
 
   Future<void> obtenerUbicacion() async {
     setState(() {
@@ -32,12 +37,18 @@ class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
     });
 
     try {
-      final resultado = await widget.servicio.obtenerPosicion();
+      final Position resultado =
+          await widget.servicio.obtenerPosicion();
 
       if (!mounted) return;
 
       setState(() {
-        posicion = resultado;
+        _latitudController.text =
+            resultado.latitude.toStringAsFixed(6);
+
+        _longitudController.text =
+            resultado.longitude.toStringAsFixed(6);
+
         mensaje = 'Ubicación obtenida correctamente.';
       });
     } catch (e) {
@@ -45,7 +56,6 @@ class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
 
       setState(() {
         mensaje = e.toString().replaceFirst('Exception: ', '');
-        posicion = null;
       });
     } finally {
       if (mounted) {
@@ -56,23 +66,45 @@ class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
     }
   }
 
+  String? validarCoordenada(
+    String? value,
+    double minimo,
+    double maximo,
+    String nombre,
+  ) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Ingresa la $nombre.';
+    }
+
+    final numero = double.tryParse(value.trim());
+
+    if (numero == null) {
+      return 'Ingresa un número válido.';
+    }
+
+    if (!numero.isFinite ||
+        numero < minimo ||
+        numero > maximo) {
+      return 'Valor fuera del rango permitido.';
+    }
+
+    return null;
+  }
+
   void guardarPunto() {
     if (!_formKey.currentState!.validate()) return;
 
-    if (posicion == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Primero debes obtener la ubicación GPS.'),
-        ),
-      );
-      return;
-    }
+    final latitud =
+        double.parse(_latitudController.text.trim());
+
+    final longitud =
+        double.parse(_longitudController.text.trim());
 
     final punto = PuntoInteres(
       nombre: _nombreController.text.trim(),
       descripcion: _descripcionController.text.trim(),
-      latitud: posicion!.latitude,
-      longitud: posicion!.longitude,
+      latitud: latitud,
+      longitud: longitud,
     );
 
     Navigator.pop(context, punto);
@@ -82,6 +114,8 @@ class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
   void dispose() {
     _nombreController.dispose();
     _descripcionController.dispose();
+    _latitudController.dispose();
+    _longitudController.dispose();
     super.dispose();
   }
 
@@ -102,10 +136,11 @@ class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
             children: [
               const Icon(
                 Icons.add_location_alt,
-                size: 90,
+                size: 75,
                 color: Colors.blue,
               ),
               const SizedBox(height: 20),
+
               TextFormField(
                 controller: _nombreController,
                 decoration: const InputDecoration(
@@ -120,7 +155,9 @@ class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
+
               TextFormField(
                 controller: _descripcionController,
                 decoration: const InputDecoration(
@@ -130,54 +167,87 @@ class _RegistrarPuntoPageState extends State<RegistrarPuntoPage> {
                 ),
                 maxLines: 3,
               ),
+
+              const SizedBox(height: 24),
+
+              const Text(
+                'Coordenadas geográficas',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: _latitudController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Latitud',
+                  hintText: 'Ej. 20.310710',
+                  prefixIcon: Icon(Icons.explore),
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => validarCoordenada(
+                  value,
+                  -90,
+                  90,
+                  'latitud',
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _longitudController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Longitud',
+                  hintText: 'Ej. -90.061925',
+                  prefixIcon: Icon(Icons.explore_outlined),
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => validarCoordenada(
+                  value,
+                  -180,
+                  180,
+                  'longitud',
+                ),
+              ),
+
               const SizedBox(height: 20),
+
               FilledButton.icon(
                 onPressed: cargando ? null : obtenerUbicacion,
                 icon: const Icon(Icons.my_location),
-                label: const Text('Obtener ubicación GPS'),
+                label: const Text('Obtener coordenadas por GPS'),
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 12),
+
               if (cargando)
                 const Center(
                   child: CircularProgressIndicator(),
                 ),
+
               Text(
                 mensaje,
                 textAlign: TextAlign.center,
               ),
-              if (posicion != null) ...[
-                const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Coordenadas obtenidas',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Latitud: ${posicion!.latitude}',
-                        ),
-                        Text(
-                          'Longitud: ${posicion!.longitude}',
-                        ),
-                        Text(
-                          'Precisión: ${posicion!.accuracy} m',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+
               const SizedBox(height: 24),
-              FilledButton(
+
+              FilledButton.icon(
                 onPressed: guardarPunto,
-                child: const Text('Guardar punto de interés'),
+                icon: const Icon(Icons.save),
+                label: const Text('Guardar punto de interés'),
               ),
             ],
           ),

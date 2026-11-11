@@ -18,7 +18,26 @@ class PuntosPage extends StatefulWidget {
 }
 
 class _PuntosPageState extends State<PuntosPage> {
-  final List<PuntoInteres> puntos = [];
+  final List<PuntoInteres> puntos = [
+    const PuntoInteres(
+      nombre: 'Campo de Fútbol 4 Piedras',
+      descripcion: 'Campo deportivo ubicado en Dzitbalché, Campeche.',
+      latitud: 20.310710,
+      longitud: -90.0619248,
+    ),
+    const PuntoInteres(
+      nombre: 'Zona Centro',
+      descripcion: 'Zona central de Dzitbalché, Campeche.',
+      latitud: 20.3211912,
+      longitud: -90.0565776,
+    ),
+    const PuntoInteres(
+      nombre: 'Capilla La Guadalupe',
+      descripcion: 'Capilla ubicada en Dzitbalché, Campeche.',
+      latitud: 20.3288534,
+      longitud: -90.0489161,
+    ),
+  ];
 
   Future<void> registrarPunto() async {
     final resultado = await Navigator.push<PuntoInteres>(
