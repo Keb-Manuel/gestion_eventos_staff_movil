@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MainApp());
+import 'screens/inicio_screen.dart';
+import 'services/notificaciones.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Notificaciones.iniciar();
+
+  runApp(const MiAplicacion());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MiAplicacion extends StatelessWidget {
+  const MiAplicacion({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Reporte Móvil de Incidencias',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
         ),
+        useMaterial3: true,
       ),
+      home: const InicioScreen(),
     );
   }
 }
