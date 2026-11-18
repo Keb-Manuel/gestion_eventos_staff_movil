@@ -1,31 +1,43 @@
 import 'package:flutter/material.dart';
+import 'data/book_database.dart';
+import 'services/notification_service.dart';
+import 'screens/library_shell.dart';
 
-import 'screens/inicio_screen.dart';
-import 'services/notificaciones.dart';
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Notificaciones.iniciar();
-
-  runApp(const MiAplicacion());
+  await BookDatabase.instance.database;
+  await NotificationService.instance.initialize();
+  runApp(const BibliotecaApp());
 }
 
-class MiAplicacion extends StatelessWidget {
-  const MiAplicacion({super.key});
+class BibliotecaApp extends StatelessWidget {
+  const BibliotecaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    const navy = Color(0xFF173B57);
     return MaterialApp(
+      title: 'Biblioteca Personal',
       debugShowCheckedModeBanner: false,
-      title: 'Reporte Móvil de Incidencias',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-        ),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: navy),
+        scaffoldBackgroundColor: const Color(0xFFF5F7FA),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFF5F7FA),
+          foregroundColor: navy,
+          centerTitle: false,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
-      home: const InicioScreen(),
+      home: const LibraryShell(),
     );
   }
 }
